@@ -26,6 +26,7 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(DT)
 
+# read in the file, only usign esg_df (the larger set)
 esg_df<- read_excel("data/ACWI-ESG-Results_1.xlsx")
 esg_uni_df <-read_excel("data/ACWI-ESG-Universal-Results_1.xlsx")
 
@@ -42,10 +43,11 @@ theme_set(theme_minimal())
 分析師報告中證實MSCI ACWI ESG Leaders Index的確在2020年疫情爆發之後較MSCI ACWI Index取得相對好的報酬。近期歐盟祭出2050年碳中和目標與一系列政策，企業因此面臨低碳轉型風險，因此我們希望將樣本池鎖定歐盟企業，且著重於ESG中的碳排放管理指標，期許能夠針對這個課題得出一些新發現。
 
 ```{r data cleaning, echo=FALSE, warning=FALSE}
+# only using EU countries
 esg_eu_df = esg_df %>% filter(ISSUER_CNTRY_DOMICILE %in% c("AT", "BE", "BG", "HR", "CY", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL","PT","RO", "SK", "SI", "ES", "SE"))
 
+# seperate into carb heavt/light data frames
 carb_heavy_df = esg_df %>% filter(Industry %in% c("Materials", "Utilities", "Energy", "Industrial"))
-
 carb_light_df = esg_df %>% 
   filter(!Industry %in% c("Materials", "Utilities", "Energy", "Industrial")) 
 
@@ -54,7 +56,7 @@ carb_heavy_df[, c(31:33)] <- sapply(carb_heavy_df[, c(31:33)], as.numeric)
 carb_light_df[, c(31:33)] <- sapply(carb_light_df[, c(31:33)], as.numeric)
 esg_eu_df[, c(31:33)] <- sapply(esg_eu_df[, c(31:33)], as.numeric)
 
-# split the data into train/test 
+# split the data into train/test for modeling 
 set.seed(100)
 heavy_split = initial_split(carb_heavy_df, prop = 0.9)
 heavy_train = training(heavy_split)
@@ -76,6 +78,8 @@ light_test = testing(light_split)
 
 
 ```{r eda, echo=FALSE, warning=FALSE, message=FALSE}
+
+# carb emission VS. total return, correlation chart (using y~x) 
 heavy.graph <- ggplot(carb_heavy_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
   geom_point() + geom_smooth(method="lm", col="red") + ylim(-10, 1000)+ 
   ggtitle("Correlation of Emission Score to Return - Carbon Heavy Industries") + 
@@ -89,7 +93,10 @@ light.graph <- ggplot(carb_light_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 
-# map plot
+# map plot - below is just to build the map
+# if need to change anything, visit the below link:
+# https://egallic.fr/en/european-map-using-r/
+
 map_eu = esg_eu_df %>%
   group_by(ISSUER_CNTRY_DOMICILE) %>%
   summarise(avg_score = mean(CARBON_EMISSIONS_SCORE))
@@ -170,6 +177,7 @@ I used two models here, linear regression and random forest, you guys can compar
 # linear regression 
 #######
 # use 2y as a try, can switch out Y variable, and/or take out "Industry"
+
 lr_heavy = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = heavy_train)
 
 lr_light = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, na.action=na.omit)
@@ -182,11 +190,11 @@ forest_heavy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUS
 
 forest_light = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
 
-# out-of-sample test 
+# predict the yhat by using the "unused" test set 
 p_heavy<- predict(lr_heavy, heavy_test)
 p_light<- predict(lr_light, light_test)
 
-# Compute errors: error
+# Compute errors: difference between predicted and actual test set 
 error_heavy <- p_heavy - heavy_test[["TotalReturn_2y"]]
 error_light <- p_heavy - heavy_test[["TotalReturn_2y"]]
 
@@ -205,6 +213,7 @@ rmse_forest_l = rmse(forest_light, light_test)
 
 
 ```{r model report, echo=FALSE, warning=FALSE}
+# these are report of linear models
 summary(lr_heavy)
 summary(lr_light)
 ```
@@ -215,6 +224,7 @@ summary(lr_light)
 (說明)
 
 ```{r model report-2, echo=FALSE, warning=FALSE}
+# report of random forest model
 print(forest_heavy)
 print(forest_light)
 ```
@@ -227,6 +237,7 @@ you can use `rmse_lm_h` to show the variable
 
 
 ```{r rmse, echo=FALSE, warning=FALSE}
+# lower RMSE means better moedle performance 
 rmse_lm_h
 rmse_lm_l
 rmse_forest_h
