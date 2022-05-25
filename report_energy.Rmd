@@ -99,7 +99,7 @@ light.graph <- ggplot(carb_light_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn
   labs(y = "Total Return Rate - 2 years", x = "Carbon Emission Score",) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-energy.graph <- ggplot(energyt_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
+energy.graph <- ggplot(energy_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
   geom_point()+ geom_smooth(method="lm", col="red") + ylim(-10, 1000)+ 
   ggtitle("Correlation of Emission Score to Return - ENergy") + 
   labs(y = "Total Return Rate - 2 years", x = "Carbon Emission Score",) +
@@ -216,35 +216,6 @@ p_light<- predict(lr_light, light_test)
 # Compute errors: difference between predicted and actual test set 
 error_heavy <- p_heavy - heavy_test[["TotalReturn_2y"]]
 error_light <- p_heavy - heavy_test[["TotalReturn_2y"]]
-
-
-#######
-# lasso - a kind of linear regression that will choose the best combination by itself 
-#######
-
-# Lasso regression, or the Least Absolute Shrinkage and Selection Operator, is also a modification of linear regression. In lasso, the loss function is modified to minimize the complexity of the model by limiting the sum of the absolute values of the model coefficients 
-
-
-
-
-# seperate into Xs and y 
-x_light_train = model.matrix(TotalReturn_2y ~ .-1, data=light_train) # do -1 to drop intercept!
-y_light_train = light_train$TotalReturn_2y
-
-x_light_test = model.matrix(TotalReturn_2y ~ .-1, data=light_test) # do -1 to drop intercept!
-y_light_test = light_test$TotalReturn_2y
-
-lambdas <- 10^seq(2, -3, by = -.1)
-
-# Setting alpha = 1 implements lasso regression
-lasso_reg <- cv.glmnet(x_light_train, y_light_train, alpha = 1, lambda = lambdas, standardize = TRUE, nfolds = 5)
-
-# Best 
-lambda_best <- lasso_reg$lambda.min 
-lambda_best
-
-
-
 
 # Calculate RMSE
 rmse_lm_h =sqrt(mean(error_heavy^2))

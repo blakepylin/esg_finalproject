@@ -99,7 +99,7 @@ light.graph <- ggplot(carb_light_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn
   labs(y = "Total Return Rate - 2 years", x = "Carbon Emission Score",) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-energy.graph <- ggplot(energyt_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
+energy.graph <- ggplot(energy_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
   geom_point()+ geom_smooth(method="lm", col="red") + ylim(-10, 1000)+ 
   ggtitle("Correlation of Emission Score to Return - ENergy") + 
   labs(y = "Total Return Rate - 2 years", x = "Carbon Emission Score",) +
@@ -178,121 +178,8 @@ energy.graph
 map.graph
 ```
 
+### Next Step
 
 
 
 
-### Modeling 
-First, seperate data into carbon heavy industries (those 4), and carbon light industries
-I used two models here, linear regression and random forest, you guys can compare the performance of both models
-
-
-(說明) might want to show how you build model, what varibles you included 
-
-
-
-```{r all models, echo=FALSE, warning=FALSE}
-#######
-# linear regression 
-#######
-# use 2y as a try, can switch out Y variable, and/or take out "Industry"
-
-lr_heavy = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = heavy_train)
-
-lr_light = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, na.action=na.omit)
-
-#######
-# random forest
-#######
-
-forest_heavy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = heavy_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE)
-
-forest_light = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
-
-# predict the yhat by using the "unused" test set 
-p_heavy<- predict(lr_heavy, heavy_test)
-p_light<- predict(lr_light, light_test)
-
-# Compute errors: difference between predicted and actual test set 
-error_heavy <- p_heavy - heavy_test[["TotalReturn_2y"]]
-error_light <- p_heavy - heavy_test[["TotalReturn_2y"]]
-
-
-#######
-# lasso - a kind of linear regression that will choose the best combination by itself 
-#######
-
-# Lasso regression, or the Least Absolute Shrinkage and Selection Operator, is also a modification of linear regression. In lasso, the loss function is modified to minimize the complexity of the model by limiting the sum of the absolute values of the model coefficients 
-
-
-
-
-# seperate into Xs and y 
-x_light_train = model.matrix(TotalReturn_2y ~ .-1, data=light_train) # do -1 to drop intercept!
-y_light_train = light_train$TotalReturn_2y
-
-x_light_test = model.matrix(TotalReturn_2y ~ .-1, data=light_test) # do -1 to drop intercept!
-y_light_test = light_test$TotalReturn_2y
-
-lambdas <- 10^seq(2, -3, by = -.1)
-
-# Setting alpha = 1 implements lasso regression
-lasso_reg <- cv.glmnet(x_light_train, y_light_train, alpha = 1, lambda = lambdas, standardize = TRUE, nfolds = 5)
-
-# Best 
-lambda_best <- lasso_reg$lambda.min 
-lambda_best
-
-
-
-
-# Calculate RMSE
-rmse_lm_h =sqrt(mean(error_heavy^2))
-rmse_lm_l =sqrt(mean(error_light^2))
-
-rmse_forest_h = rmse(forest_heavy, heavy_test) 
-rmse_forest_l = rmse(forest_light, light_test) 
-```
-
-#### Model Results {.tabset}
-##### 1. Linear Model Result
-
-(說明)
-
-
-```{r model report, echo=FALSE, warning=FALSE}
-# these are report of linear models
-summary(lr_heavy)
-summary(lr_light)
-```
-
-##### 2. Random Forest Result
-
-
-(說明)
-
-```{r model report-2, echo=FALSE, warning=FALSE}
-# report of random forest model
-print(forest_heavy)
-print(forest_light)
-```
-
-
-##### 3. Compare Out-of-Sample Performance
-
-(說明)
-you can use `rmse_lm_h` to show the variable 
-
-
-```{r rmse, echo=FALSE, warning=FALSE}
-# lower RMSE means better moedle performance 
-rmse_lm_h
-rmse_lm_l
-rmse_forest_h
-rmse_forest_l
-```
-
-
-
-### Conclusion
-(說明)
