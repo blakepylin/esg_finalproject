@@ -190,6 +190,10 @@ I used two models here, linear regression and random forest, you guys can compar
 (說明) might want to show how you build model, what varibles you included 
 
 
+## Explanation (delete this after reading):
+### linear regression 
+
+
 
 ```{r all models, echo=FALSE, warning=FALSE}
 #######
@@ -201,6 +205,8 @@ lr_heavy = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GO
 
 lr_light = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, na.action=na.omit)
 
+lr_energy = lm(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE, data = energy_train)
+
 #######
 # random forest
 #######
@@ -209,20 +215,26 @@ forest_heavy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUS
 
 forest_light = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
 
+forest_energy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = energy_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
+
 # predict the yhat by using the "unused" test set 
 p_heavy<- predict(lr_heavy, heavy_test)
 p_light<- predict(lr_light, light_test)
+p_energy<- predict(lr_energy, energy_test)
 
 # Compute errors: difference between predicted and actual test set 
 error_heavy <- p_heavy - heavy_test[["TotalReturn_2y"]]
-error_light <- p_heavy - heavy_test[["TotalReturn_2y"]]
+error_light <- p_light - light_test[["TotalReturn_2y"]]
+error_energy <- p_energy - light_test[["TotalReturn_2y"]]
 
 # Calculate RMSE
 rmse_lm_h =sqrt(mean(error_heavy^2))
 rmse_lm_l =sqrt(mean(error_light^2))
+rmse_lm_e =sqrt(mean(error_energy^2))
 
 rmse_forest_h = rmse(forest_heavy, heavy_test) 
 rmse_forest_l = rmse(forest_light, light_test) 
+rmse_forest_e = rmse(forest_energy, energy_test) 
 ```
 
 #### Model Results {.tabset}
@@ -235,6 +247,7 @@ rmse_forest_l = rmse(forest_light, light_test)
 # these are report of linear models
 summary(lr_heavy)
 summary(lr_light)
+summary(lr_energy)
 ```
 
 ##### 2. Random Forest Result
@@ -246,6 +259,7 @@ summary(lr_light)
 # report of random forest model
 print(forest_heavy)
 print(forest_light)
+print(forest_energy)
 ```
 
 
@@ -259,8 +273,10 @@ you can use `rmse_lm_h` to show the variable
 # lower RMSE means better moedle performance 
 rmse_lm_h
 rmse_lm_l
+rmse_lm_e
 rmse_forest_h
 rmse_forest_l
+rmse_forest_e
 ```
 
 
