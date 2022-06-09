@@ -43,6 +43,9 @@ theme_set(theme_minimal())
 
 分析師報告中證實MSCI ACWI ESG Leaders Index的確在2020年疫情爆發之後較MSCI ACWI Index取得相對好的報酬。近期歐盟祭出2050年碳中和目標與一系列政策，企業因此面臨低碳轉型風險，因此我們希望將樣本池鎖定歐盟企業，且著重於ESG中的碳排放管理指標，期許能夠針對這個課題得出一些新發現。
 
+
+### data cleaning - explain
+since carbon emission is our focus, and all the industries tend to have drastic different in their carbon emission amount, we seperate our companies into three industries: carbon heavy industry, carbon light industry, and energy industry.  
 ```{r data cleaning, echo=FALSE, warning=FALSE}
 # only using EU countries
 esg_eu_df = esg_df %>% filter(ISSUER_CNTRY_DOMICILE %in% c("AT", "BE", "BG", "HR", "CY", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL","PT","RO", "SK", "SI", "ES", "SE"))
@@ -53,7 +56,7 @@ carb_light_df = esg_df %>%
   filter(!Industry %in% c("Materials", "Utilities", "Energy", "Industrial")) 
 energy_df = esg_df %>% filter(Industry %in% c("Energy"))
 
-# chnage "return" variables from character to double
+# chnange "return" variables from character to double
 carb_heavy_df[, c(31:33)] <- sapply(carb_heavy_df[, c(31:33)], as.numeric)
 carb_light_df[, c(31:33)] <- sapply(carb_light_df[, c(31:33)], as.numeric)
 esg_eu_df[, c(31:33)] <- sapply(esg_eu_df[, c(31:33)], as.numeric)
@@ -187,13 +190,18 @@ First, seperate data into carbon heavy industries (those 4), and carbon light in
 I used two models here, linear regression and random forest, you guys can compare the performance of both models
 
 
-(說明) might want to show how you build model, what varibles you included 
+(說明) might want to show how you build model, what variables you included 
 
 
 ## Explanation (delete this after reading):
 ### linear regression 
 
+To see the general view of the total return of that company, we use 2 year average total return as our outcome variable `TotalReturn_2y`, and in the RHS, we use our main focus targeted variable "carbon emission score", and other "Score" variables to control for  other related qualities of the company.
 
+Below, we run different models on each of the industries on the train model, and then later test the model with our test set, to see which model performs better. The two models we are using are linear regression and random forest. The advantage of linear regression is that it's easier to interpret, the coeffient means the contribution of that independent variable to depedent variable. Random Forest, on the other hand might be a little difficult to the induvidual importance of the dependent variable, but it is good at finding correlation of the dependent variables by itself. So if the goal is to predict a certain company's total return based on their performance, then applying the random forest model might be a better choice.
+
+
+(Hint: if you guys want to try it out, add/delete the RHS(X) variables that you might find important, and the model with the lower rmse means that model is better)
 
 ```{r all models, echo=FALSE, warning=FALSE}
 #######
@@ -215,7 +223,7 @@ forest_heavy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUS
 
 forest_light = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = light_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
 
-forest_energy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE + Industry, data = energy_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
+forest_energy = randomForest(TotalReturn_2y ~ IVA_COMPANY_RATING + INDUSTRY_ADJUSTED_SCORE + GOVERNANCE_PILLAR_SCORE + CARBON_EMISSIONS_SCORE , data = energy_train, control = rpart.control(cp = 0.002, minsplit=30), importance = TRUE, na.action=na.omit)
 
 # predict the yhat by using the "unused" test set 
 p_heavy<- predict(lr_heavy, heavy_test)
@@ -249,6 +257,8 @@ summary(lr_heavy)
 summary(lr_light)
 summary(lr_energy)
 ```
+From the result above we can see that the carbon emission score is only significant in the energy industry, however, the coefficient is negative, which is not we predicted, one possible reason for that might be the energy industry is heavily depended on buring coal/gas this kind of high carbon emission activities, so that a high carbon emission score means lower productin which cause the lower 2 year total return. This hypothesis might be the same for carbon heavy industry as well, since their coefficient for carbon emission score is also negative. The coefficient for carbon emission score is only positive (as we predicted) in light carbon industry.
+
 
 ##### 2. Random Forest Result
 
@@ -260,9 +270,13 @@ summary(lr_energy)
 print(forest_heavy)
 print(forest_light)
 print(forest_energy)
+
+vi = varImpPlot(forest_energy, type=1, main = "Random Forest Variable Importance: Energy")
+
 ```
+Although it is hard to intepret each of the coefficient in the random forest model, we can still know the importance of each varibale from this Variable Importance Plot, we can see that carbon emission score is the second most important variabes among all the "score". 
 
-
+(hint: add/ delete the variable in the model building part based on how important each varible is)
 ##### 3. Compare Out-of-Sample Performance
 
 (說明)
@@ -278,7 +292,7 @@ rmse_forest_h
 rmse_forest_l
 rmse_forest_e
 ```
-
+Finally we can see how the models perform based on their Root-mean-squared-error (rmse), the lower the number is, the better the model is performing. Again, each of the model has their own advantages and disadvantages, for our purpose of finding how carbon emissin score affect total return, it might be better to use rnadom forest to see which of the variables are more important then use those in linear regression to see its actual coefficent to our Y variable.
 
 
 ### Conclusion
