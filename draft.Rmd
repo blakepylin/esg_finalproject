@@ -96,7 +96,7 @@ ggplot2允許用戶在更抽象的層面上增加、刪除或轉換圖表中的�
 
 #### Data 處理
 
-```{r data cleaning, echo=FALSE, warning=FALSE}
+```{r data cleaning, warning=FALSE}
 # only using EU countries
 esg_eu_df = esg_df %>% filter(ISSUER_CNTRY_DOMICILE %in% c("AT", "BE", "BG", "HR", "CY", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL","PT","RO", "SK", "SI", "ES", "SE"))
 
@@ -131,7 +131,7 @@ energy_test = testing(energy_split)
 
 ##### 分析與結果
 
-```{r eda, echo=FALSE, warning=FALSE, message=FALSE}
+```{r eda, warning=FALSE, message=FALSE}
 
 # carb emission VS. total return, correlation chart (using y~x) 
 heavy.graph <- ggplot(carb_heavy_df, aes(x=CARBON_EMISSIONS_SCORE, y=TotalReturn_2y))+
@@ -185,15 +185,15 @@ map.graph <- ggplot(data = map) +
   ggtitle("Carbon Emission Score Across EU") + 
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-showtable_df = esg_eu_df %>%
-  select(TotalReturn_2y, Industry,CARBON_EMISSIONS_SCORE,IVA_COMPANY_RATING, INDUSTRY_ADJUSTED_SCORE,GOVERNANCE_PILLAR_SCORE)
+#showtable_df = esg_eu_df %>%
+#select(TotalReturn_2y, Industry,CARBON_EMISSIONS_SCORE,IVA_COMPANY_RATING, INDUSTRY_ADJUSTED_SCORE,GOVERNANCE_PILLAR_SCORE)
 
 # showing the data frame - important variables 
-datatable(showtable_df, options = list(pageLength = 5))
+datatable(esg_eu_df, options = list(pageLength = 5))
 ```
 
 #### 一、相關係數熱力圖
-```{r pic1-1, dpi=200}
+```{r pic1-1, dpi=110}
 knitr::include_graphics("data/pic1.png")
 ```
 
@@ -201,7 +201,7 @@ knitr::include_graphics("data/pic1.png")
 
 解讀：為因為歐洲法規變得嚴格，各家企業的ESG資訊有了透明度和一致性以後，開始成為投資人評斷標的的因素之一。
 
-```{r pic2, dpi=200}
+```{r pic2, dpi=110}
 knitr::include_graphics("data/pic2.png")
 ```
 
@@ -215,38 +215,33 @@ knitr::include_graphics("data/pic2.png")
 #### 二、迴歸分析
 將各產業劃分為低碳排產業和高碳排產業
 
-```{r corr plots-1, echo=FALSE, warning=FALSE}
+```{r corr plots-1, warning=FALSE}
 # showing plots
 heavy.graph
 ```
 
 
-```{r corr plots-2, echo=FALSE, warning=FALSE}
+```{r corr plots-2, warning=FALSE}
 # showing plots
 light.graph
 ```
 
 
-```{r corr plots-3, echo=FALSE, warning=FALSE}
+```{r corr plots-3, warning=FALSE}
 # showing plots
 energy.graph
 ```
 
 #### 2. Avergae Emission Score Across EU
 
-```{r map plot, echo=FALSE, warning=FALSE}
+```{r map plot, warning=FALSE}
 map.graph
 ```
 
 
-
-
-
 ### Modeling 
 
-
-
-```{r all models, echo=FALSE, warning=FALSE}
+```{r all models, warning=FALSE}
 #######
 # linear regression 
 #######
@@ -292,7 +287,7 @@ rmse_forest_e = rmse(forest_energy, energy_test)
 ##### 1. Linear Model Result
 
 
-```{r model report, echo=FALSE, warning=FALSE}
+```{r model report, warning=FALSE}
 # these are report of linear models
 summary(lr_heavy)
 summary(lr_light)
@@ -305,7 +300,7 @@ summary(lr_energy)
 
 ##### 2. Random Forest Result
 
-```{r model report-2, echo=FALSE, warning=FALSE}
+```{r model report-2, warning=FALSE}
 # report of random forest model
 print(forest_heavy)
 print(forest_light)
@@ -314,11 +309,12 @@ print(forest_energy)
 vi = varImpPlot(forest_energy, type=1, main = "Random Forest Variable Importance: Energy")
 
 ```
+
 這個區塊使用隨機森林的模型，我們可以從這個變量重要性圖片，從中知道每個變量的重要性，像是碳排放得分是所有“得分”中第二重要的變量。 
 
 
 
-```{r rmse, echo=FALSE, warning=FALSE}
+```{r rmse, warning=FALSE}
 # lower RMSE means better moedle performance 
 rmse_lm_h
 rmse_lm_l
@@ -348,7 +344,7 @@ rmse_forest_e
 ### 附錄
 我們在測試資料的過程中，偶然發現中國企業的股價與ESG相關因子呈現明顯的負相關。
 
-```{r pic1-2, dpi=200}
+```{r pic1-2, dpi=110}
 knitr::include_graphics("data/pic1.png")
 ```
 

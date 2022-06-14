@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/914477/0ed1dd2a17434c359597495a71f48223
+bundleId: https://api.rpubs.com/api/v1/document/914477/0ed1dd2a17434c359597495a71f48223
+url: http://rpubs.com/blakelin/914477
+when: 1655221381.18123
+lastSyncTime: 1655221381.18126
