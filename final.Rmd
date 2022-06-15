@@ -2,15 +2,15 @@
 title: "碳排放管理對於企業股價之影響"
 author: "107000225簡楷玲 107000274黃弌"
 date: "6/11/2022"
-output: html_document
+output: 
+  html_document:
+    theme: darkly
+    css: style.css
+    code_folding: hide
 ---
-<style>
-    body { background-color: #A9CAAB; }
-    pre, pre:not([class]) { background-color: gainsboro; }
-</style>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(readxl)
 library(caret)
@@ -26,6 +26,7 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(DT)
 library(glmnet)
+library(kableExtra)
 
 # read in the file, only usign esg_df (the larger set)
 esg_df<- read_excel("data/ACWI-ESG-Results_1.xlsx")
@@ -33,6 +34,13 @@ esg_uni_df <-read_excel("data/ACWI-ESG-Universal-Results_1.xlsx")
 
 # override the default setting of ggplot
 theme_set(theme_minimal())
+
+#<style>
+    #body { background-color: #023020; style="color:azure;"}
+   # pre, pre:not([class]) { background-color: gainsboro; }
+#</style>
+
+
 ```
 
 ### 摘要
@@ -62,10 +70,12 @@ ggplot2允許用戶在更抽象的層面上增加、刪除或轉換圖表中的�
 #### sapply
 以矩陣行是來展現表格，是apply套件的一種
 
-
+\
 
 ### 研究主題
 碳排放管理對於企業股價之相關性分析
+
+\
 
 ### 研究動機
 近年來，各種以ESG為主題的金融產品如基金、ETF等如雨後春筍般湧出。從一開始作為投資熱潮，到現在偶爾為人所詬病，認為ESG對投資並無助益。
@@ -77,6 +87,8 @@ ggplot2允許用戶在更抽象的層面上增加、刪除或轉換圖表中的�
 除了以上所提到的法規制度，全球正在面臨嚴峻的氣候風險，過去五年美國發生的極端氣候災難事件，已帶來超過6,000億美元的損失，無論是公私部門都明顯感受到氣候風險的壓力、以及改善氣候變遷問題，因此達到2050碳中和目標刻不容緩。
 
 經過以上研究，我們相信在企業所發佈ESG資訊將在近幾年逐漸標準化，比起現今將更能提供投資人有益的資訊。而歐洲作為領先全球制定法規的區域，其企業也將受到規範而必須進行資訊揭露，因此我們希望將樣本池鎖定歐盟企業，且著重於ESG中的碳排放管理指標，期許能夠針對這個課題得出一些新發現。
+
+\
 
 ### 研究方法
 利用MSCI ACWI Index 中的歐盟個股與其碳排管理指標，進行單因子迴歸分析，以探討「碳排管理是否能帶來超額報酬」之課題。由於產業間業務性質差異甚大，因此也會將個股按照產業區分，以達到產業中立之目的。
@@ -93,6 +105,7 @@ ggplot2允許用戶在更抽象的層面上增加、刪除或轉換圖表中的�
 
 5.使用library、filter、sapply、training、testing、ggplot、datatable等套件
 
+\
 
 #### Data 處理
 
@@ -129,7 +142,6 @@ energy_test = testing(energy_split)
 ```
 
 
-##### 分析與結果
 
 ```{r eda, warning=FALSE, message=FALSE}
 
@@ -189,10 +201,22 @@ map.graph <- ggplot(data = map) +
 #select(TotalReturn_2y, Industry,CARBON_EMISSIONS_SCORE,IVA_COMPANY_RATING, INDUSTRY_ADJUSTED_SCORE,GOVERNANCE_PILLAR_SCORE)
 
 # showing the data frame - important variables 
-datatable(esg_eu_df, options = list(pageLength = 5))
+#datatable(esg_eu_df, options = list(pageLength = 5), width = 500)
+
+#, table.attr = "style = \"color: black;\""
+# kable_classic
+
+kable(esg_eu_df, "html", table.attr = "bgcolor = \"color: white;\"") %>%
+  kable_styling("striped","condensed") %>%
+  scroll_box(width = "100%", height = "300px")
 ```
 
-#### 一、相關係數熱力圖
+\
+
+#### 分析與結果
+
+##### 一、相關係數熱力圖
+
 ```{r pic1-1, dpi=110}
 knitr::include_graphics("data/pic1.png")
 ```
@@ -206,13 +230,14 @@ knitr::include_graphics("data/pic2.png")
 ```
 
 
-
 能源產業中，碳排曝險分數與報酬率呈現正相關，而碳排總分與報酬率呈現負相關。
 
 解讀：近兩年油價上漲，加上對石油需求提升，能源產業透過提高產能（碳排增加），達到獲利成長。
 
+\
 
-#### 二、迴歸分析
+##### 二、迴歸分析
+
 將各產業劃分為低碳排產業和高碳排產業
 
 ```{r corr plots-1, warning=FALSE}
@@ -232,14 +257,15 @@ light.graph
 energy.graph
 ```
 
-#### 2. Avergae Emission Score Across EU
+\
+
+##### 三、歐盟碳排放分數分佈圖
 
 ```{r map plot, warning=FALSE}
 map.graph
 ```
 
 
-### Modeling 
 
 ```{r all models, warning=FALSE}
 #######
@@ -283,9 +309,10 @@ rmse_forest_l = rmse(forest_light, light_test)
 rmse_forest_e = rmse(forest_energy, energy_test) 
 ```
 
+\
+
 #### Model Results {.tabset}
 ##### 1. Linear Model Result
-
 
 ```{r model report, warning=FALSE}
 # these are report of linear models
@@ -294,9 +321,11 @@ summary(lr_light)
 summary(lr_energy)
 ```
 
-從上面的圖片我們可以看出，碳排放分數只在能源行業顯著並係數為負，但這不符合我們預測的，一種可能的原因可能是因為能源行業嚴重依賴燒煤/ gas 這種高碳排放的活動，高碳排放分數意味著較低的產品，導致較低的 2 年總回報。而 這個假設對於碳重工業也可能是相同的，因為它們的碳排放得分係數也是負的。碳排放分數的係數僅在輕碳工業中為正（正如我們所預測的）
+從以上結果得知，碳排放分數只在能源行業顯著並係數為負，這不符合我們的初步預期。
+但觀察市場現況，我們認為這是合理的。因近兩年以來油價高漲且需求上升，能源產業在期間不斷提高產能，取得大幅獲利的同時，碳排放總量也提升。
 
-
+同樣的假設也可以應用在高碳排產業上，因為它們的碳排放得分係數也是負值。
+碳排放分數的係數僅在低碳排工業中為正，符合我們的初步預期。
 
 ##### 2. Random Forest Result
 
@@ -325,13 +354,16 @@ rmse_forest_e
 ```
 這張圖片，我們可以根據它們的均方根誤差 (rmse) 來查看模型的性能，均方根誤差是一種常用的測量數值之間差異的量度 數字越小，模型的性能就越好。 
 
+
+
+\
+
 #### Wrap up
+
 我們可以發現使用隨機森林的模型，性能相較於其他模型還要好。
 最後，每個模型都有自己的優點和缺點，都是為了幫助我們了解碳排放分數如何影響總回報，使用模型來查看哪些變量更重要，然後使用線性回歸中的變量，查看它對我們的 Y 變量的實際係數之影響。
 
-
-
-
+\
 
 ### 結論
 目前雖然國際間尚未有完整的ESG資訊揭露法規法案，但我們可以從以上結果分析得出，在法規逐步落實的地區（歐洲），ESG評等、碳排放分數與股價呈現正相關，可以間接説明ESG已經開始成為投資決策中重要的一環。
@@ -340,6 +372,7 @@ rmse_forest_e
 
 總結而言，我們可以推測，在法規逐步落實的地區，ESG評等與股價開始有正相關的趨勢。可持續觀察近年這些ESG因子是不是變得更有效，以及企業在面對價格變高的碳費用時是否會面臨成本衝擊，有無辦法把這些費用轉嫁出去，畢竟在成本上升的過程中，獲利將可能被侵蝕，進而影響股價表現。
 
+\
 
 ### 附錄
 我們在測試資料的過程中，偶然發現中國企業的股價與ESG相關因子呈現明顯的負相關。
@@ -351,6 +384,7 @@ knitr::include_graphics("data/pic1.png")
 對中國企業來説，ESG分數、E向度分數、G向度分數、S向度分數、碳排放分數皆與近兩年、一年、半年的累積報酬率呈現明顯負相關。（即分數越糟糕，股價表現越好）
 解讀：中國股票主要是政策導向概念股，股價波動會被政府政策牽動，且ESG資訊相對於歐洲、美國等國家不透明。
 
+\
 
 #### 四個問題
 
@@ -366,5 +400,3 @@ tidyverse、readxl、caret、rpart.plot、rsample、randomForest、modelr、corr
 
 ##### (4) What is the most difficult part of your analysis?
 ESG議題雖然被討論了很多年，但實際上目前尚未完全受法規管制，國際之間也缺乏通用的揭露標準，步伐最快的歐洲也只會在2024年才會完整落實法規。在這樣的情況下，要想得到各家企業「透明且標準化的ESG資訊」仍有一段很長的距離。而我們處在這個變革的開端，就算是資料庫裏的raw data也是相當雜亂，無論是想要去收集資料，或是考量用何種因子才能取得有效的實證結果，都相當困難，我們能做的就只有透過現在的市場趨勢去預測未來。
-
-
